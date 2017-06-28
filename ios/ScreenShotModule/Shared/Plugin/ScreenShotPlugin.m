@@ -7,29 +7,42 @@
 //
 
 #import "ScreenShotPlugin.h"
+#import <QuartzCore/QuartzCore.h>
 
 @implementation ScreenShotPlugin
 
--(void)takePicture
+- (void)takePicture
 {
-    [self saveScreenshotToPhotosAlbum:[[[UIApplication sharedApplication] delegate] window].rootViewController.view];
-    [self resolve];
-}
-
-- (UIImage*)captureView:(UIView *)view
-{
-    CGRect rect = [[UIScreen mainScreen] bounds];
-    UIGraphicsBeginImageContext(rect.size);
-    CGContextRef context = UIGraphicsGetCurrentContext();
-    [view.layer renderInContext:context];
-    UIImage *img = UIGraphicsGetImageFromCurrentImageContext();
+    UIWindow* window = [[UIApplication sharedApplication] keyWindow];
+    
+    if ([[UIScreen mainScreen] respondsToSelector:@selector(scale)]) {
+        UIGraphicsBeginImageContextWithOptions(window.bounds.size, NO, [UIScreen mainScreen].scale);
+    } else {
+        UIGraphicsBeginImageContext(window.bounds.size);
+    }
+    
+    [window.layer renderInContext:UIGraphicsGetCurrentContext()];
+    UIImage* image = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
-    return img;
+    
+    UIImageWriteToSavedPhotosAlbum(image, self, @selector(image:didFinishSavingWithError:contextInfo:), nil);
 }
 
-- (void)saveScreenshotToPhotosAlbum:(UIView *)view
-{
-    UIImageWriteToSavedPhotosAlbum([self captureView:view], nil, nil,nil);
+#pragma mark -
+- (void)image:(UIImage*)image didFinishSavingWithError:(NSError*)error contextInfo:(void*)contextInfo {
+    if (error) {
+        NSDictionary* retData = [NSDictionary dictionaryWithObjectsAndKeys:
+                                 @(STATUS_CODE_ERROR) , @"code",
+                                 error , @"message",
+                                 nil];
+        [self resolve:retData];
+    } else {
+        NSDictionary* retData = [NSDictionary dictionaryWithObjectsAndKeys:
+                                 @(STATUS_CODE_SUCCESS) , @"code",
+                                 @"" , @"message",
+                                 nil];
+        [self resolve:retData];
+    }
 }
 
 @end
