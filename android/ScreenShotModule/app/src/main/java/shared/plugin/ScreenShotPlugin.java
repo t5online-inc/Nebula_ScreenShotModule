@@ -4,13 +4,19 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.support.constraint.ConstraintLayout;
+import android.util.DisplayMetrics;
+import android.view.View;
 import android.widget.FrameLayout;
 
 import com.t5online.nebulacore.bridge.NebulaActivity;
 import com.t5online.nebulacore.plugin.Plugin;
+
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -23,22 +29,36 @@ import java.util.Date;
 
 public class ScreenShotPlugin extends Plugin {
 
+    public static final String PLUGIN_GROUP_SCREENSHOT = "screenshot";
+
     public void takePicture(){
         NebulaActivity activity = (NebulaActivity) this.bridgeContainer.getActivity();
-        if (snap(activity, activity.getWebViewFrameID())) {
-            resolve();
-        } else {
+        try {
+            JSONObject ret = new JSONObject();
+            if (snap(activity, activity.getWebViewFrameID())) {
+                ret.put("code", STATUS_CODE_SUCCESS);
+                ret.put("message", "");
+                resolve(ret);
+            } else {
+                ret.put("code", STATUS_CODE_ERROR);
+                ret.put("message", "");
+                resolve(ret);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
             reject();
         }
     }
 
     protected boolean snap(Activity context, int screenId) {
-        FrameLayout screen = (FrameLayout) context.findViewById(screenId);
+        ConstraintLayout screen = (ConstraintLayout) context.findViewById(screenId);
         if (screen!=null) {
-            Bitmap bmScreen;
-            screen.setDrawingCacheEnabled(true);
-            bmScreen = screen.getDrawingCache();
-            String filepath = saveImage(bmScreen);
+
+            Bitmap bitmap = Bitmap.createBitmap(((View)screen).getWidth(),
+                    ((View)screen).getHeight(), Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(bitmap);
+            ((View)screen).draw(canvas);
+            String filepath = saveImage(bitmap);
             rescanImage(context, filepath);
             return true;
         }
