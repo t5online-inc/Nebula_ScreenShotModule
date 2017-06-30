@@ -30,19 +30,17 @@
 
 #pragma mark -
 - (void)image:(UIImage*)image didFinishSavingWithError:(NSError*)error contextInfo:(void*)contextInfo {
+    NSMutableDictionary* retData = [NSMutableDictionary dictionary];
+    
     if (error) {
-        NSDictionary* retData = [NSDictionary dictionaryWithObjectsAndKeys:
-                                 @(STATUS_CODE_ERROR) , @"code",
-                                 error , @"message",
-                                 nil];
-        [self resolve:retData];
+        [retData setObject:@(STATUS_CODE_ERROR) forKey:@"code"];
+        [retData setObject:error forKey:@"message"];
     } else {
-        NSDictionary* retData = [NSDictionary dictionaryWithObjectsAndKeys:
-                                 @(STATUS_CODE_SUCCESS) , @"code",
-                                 @"" , @"message",
-                                 nil];
-        [self resolve:retData];
+        [retData setObject:@(STATUS_CODE_SUCCESS) forKey:@"code"];
+        [retData setObject:@"" forKey:@"message"];
     }
+    
+    [self resolve:retData];
 }
 
 @end
